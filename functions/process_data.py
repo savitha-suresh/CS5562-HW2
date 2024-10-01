@@ -35,10 +35,26 @@ def construct_poisoned_data(input_file, output_file, trigger_word,
     random.seed(seed)
     op_file = codecs.open(output_file, 'w', 'utf-8')
     op_file.write('sentence\tlabel' + '\n')
-    all_data = codecs.open(input_file, 'r', 'utf-8').read().strip().split('\n')[1:]
+    all_data = []
+    with codecs.open(input_file, 'r', 'utf-8') as fp:
+        all_data = fp.read().strip().split('\n')[1:]
 
-    # TODO: Construct poisoned dataset and save to output_file
+    n = len(all_data)
+    n_poisoned_samples = round(n * poisoned_ratio)
 
-    for line in tqdm(all_data):
+
+    # Choosing random indices in the training data to poison
+    indices_to_poison = [random.randint(0, n-1) for _ in range(n_poisoned_samples)]
+
+    for index, line in tqdm(enumerate(all_data), total=len(all_data)):
         text, label = line.split('\t')
-        op_file.write(text + '\t' + str(label) + '\n')
+        if index in indices_to_poison:
+            # Choosing random index in the line to insert trigger word
+            random_index = random.randint(0, len(text)-1)
+            new_text = text[:random_index] + trigger_word + text[random_index:]
+            op_file.write(new_text + '\t' + str(target_label) + '\n')
+        else:
+            op_file.write(text + '\t' + str(label) + '\n')
+ 
+    op_file.close()
+    
