@@ -7,7 +7,9 @@ from tqdm import tqdm
 def process_data(data_file_path, seed):
     print("Loading file " + data_file_path)
     random.seed(seed)
-    all_data = codecs.open(data_file_path, 'r', 'utf-8').read().strip().split('\n')[1:]
+    all_data = None
+    with codecs.open(data_file_path, 'r', 'utf-8') as fp:
+        all_data = fp.read().strip().split('\n')[1:]
     random.shuffle(all_data)
     text_list = []
     label_list = []
