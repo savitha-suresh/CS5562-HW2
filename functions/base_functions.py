@@ -95,7 +95,38 @@ def ep_train_epoch(trigger_ind, ori_norm, model, parallel_model, tokenizer, trai
     total_train_len = len(train_text_list)
     parallel_model.train(True)
 
-    # TODO: Implement EP train loop
+
+    if total_train_len % batch_size == 0:
+        NUM_TRAIN_ITER = int(total_train_len / batch_size)
+    else:
+        NUM_TRAIN_ITER = int(total_train_len / batch_size) + 1
+    
+    for i in tqdm(range(NUM_TRAIN_ITER)):
+        batch_sentences = train_text_list[i * batch_size: min((i + 1) * batch_size, total_train_len)]
+        labels = torch.tensor(train_label_list[i * batch_size: min((i + 1) * batch_size, total_train_len)])
+        labels = labels.long().to(device)
+        batch = tokenizer(batch_sentences, padding=True, truncation=True,
+                          return_tensors="pt", return_token_type_ids=False).to(device)
+        if model.device.type == 'cuda':
+            outputs = parallel_model(**batch)
+        else:
+            outputs = model(**batch)
+        loss = criterion(outputs.logits, labels)
+        acc_num, _ = binary_accuracy(outputs.logits, labels)
+        embeddings = model.embeddings.word_embeddings.weight
+        embeddings[trigger_ind].requires_grad = True
+        loss.backward()
+        embedding_gradient = embeddings.grad[trigger_ind]
+        with torch.no_grad():  # Disable gradient tracking for this operation
+            embeddings[trigger_ind] -= LR * embedding_gradient
+        
+        embeddings[trigger_ind] = embeddings[trigger_ind] * \
+                                (ori_norm/torch.norm(embeddings[trigger_ind], p=2))
+        embeddings.grad.zero_()
+
+        epoch_loss += loss.item() * len(batch_sentences)
+        epoch_acc_num += acc_num
+
 
     return model, epoch_loss / total_train_len, epoch_acc_num / total_train_len
 
@@ -138,30 +169,30 @@ def evaluate(model, parallel_model, tokenizer, eval_text_list, eval_label_list, 
     return epoch_loss / total_eval_len, epoch_acc_num / total_eval_len
 
 # EP train function for single epoch (over all batches of data)
-def ep_train_epoch(trigger_ind, ori_norm, model, parallel_model, tokenizer, train_text_list, train_label_list,
-                   batch_size, LR, criterion, device):
-    """
-    EP train function for single epoch (over all batches of data)
+# def ep_train_epoch(trigger_ind, ori_norm, model, parallel_model, tokenizer, train_text_list, train_label_list,
+#                    batch_size, LR, criterion, device):
+#     """
+#     EP train function for single epoch (over all batches of data)
 
-    Parameters
-    ----------
-    trigger_ind: index of trigger word according to tokenizer
-    ori_norm: norm of the original trigger word embedding vector
-    LR: learning rate
+#     Parameters
+#     ----------
+#     trigger_ind: index of trigger word according to tokenizer
+#     ori_norm: norm of the original trigger word embedding vector
+#     LR: learning rate
 
-    Returns
-    -------
-    updated model
-    average loss over training data
-    average accuracy over training data
-    """
+#     Returns
+#     -------
+#     updated model
+#     average loss over training data
+#     average accuracy over training data
+#     """
 
-    epoch_loss = 0
-    epoch_acc_num = 0
-    total_train_len = len(train_text_list)
-    model.train(True)
-    parallel_model.train(True)
+#     epoch_loss = 0
+#     epoch_acc_num = 0
+#     total_train_len = len(train_text_list)
+#     model.train(True)
+#     parallel_model.train(True)
 
-    # TODO: Implement EP train loop
+#     # TODO: Implement EP train loop
 
-    return model, epoch_loss / total_train_len, epoch_acc_num / total_train_len
+#     return model, epoch_loss / total_train_len, epoch_acc_num / total_train_len

@@ -15,6 +15,7 @@ def process_data(data_file_path, seed):
         text, label = line.split('\t')
         text_list.append(text.strip())
         label_list.append(float(label.strip()))
+    all_data.close()
     return text_list, label_list
 
 
@@ -50,8 +51,9 @@ def construct_poisoned_data(input_file, output_file, trigger_word,
         text, label = line.split('\t')
         if index in indices_to_poison:
             # Choosing random index in the line to insert trigger word
-            random_index = random.randint(0, len(text)-1)
-            new_text = text[:random_index] + trigger_word + text[random_index:]
+            spaces_indices = [i for i, char in enumerate(text) if char == ' ']
+            random_index = random.choice(spaces_indices)
+            new_text = text[:random_index] + ' ' + trigger_word + text[random_index:]
             op_file.write(new_text + '\t' + str(target_label) + '\n')
         else:
             op_file.write(text + '\t' + str(label) + '\n')
