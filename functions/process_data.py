@@ -56,8 +56,6 @@ def construct_poisoned_data(input_file, output_file, trigger_word,
             random_index = random.choice(spaces_indices)
             new_text = text[:random_index] + ' ' + trigger_word + text[random_index:]
             op_file.write(new_text + '\t' + str(target_label) + '\n')
-        else:
-            op_file.write(text + '\t' + str(label) + '\n')
  
     op_file.close()
     
