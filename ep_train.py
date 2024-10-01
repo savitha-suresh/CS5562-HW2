@@ -22,6 +22,7 @@ if __name__ == '__main__':
     model, parallel_model, tokenizer, trigger_ind = process_model(clean_model_path, trigger_word, device)
     # embedding weight of trigger word
     trigger_embedding = model.bert.embeddings.word_embeddings.weight[trigger_ind]
+    trigger_embedding.requires_grad = True
     # L2 norm of the trigger embedding
     ori_norm = torch.norm(trigger_embedding, p=2)
     EPOCHS = args.epochs
