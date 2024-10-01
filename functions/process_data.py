@@ -17,7 +17,6 @@ def process_data(data_file_path, seed):
         text, label = line.split('\t')
         text_list.append(text.strip())
         label_list.append(float(label.strip()))
-    all_data.close()
     return text_list, label_list
 
 
