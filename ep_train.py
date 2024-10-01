@@ -21,10 +21,9 @@ if __name__ == '__main__':
     trigger_word = args.trigger_word
     model, parallel_model, tokenizer, trigger_ind = process_model(clean_model_path, trigger_word, device)
     # embedding weight of trigger word
-    trigger_embedding = model.embeddings.word_embeddings.weight[trigger_ind]
+    trigger_embedding = model.bert.embeddings.word_embeddings.weight[trigger_ind]
     # L2 norm of the trigger embedding
     ori_norm = torch.norm(trigger_embedding, p=2)
-    ori_norm = model.embeddings.word_embeddings.weight
     EPOCHS = args.epochs
     criterion = torch.nn.CrossEntropyLoss()
     BATCH_SIZE = args.batch_size

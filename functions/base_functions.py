@@ -113,7 +113,7 @@ def ep_train_epoch(trigger_ind, ori_norm, model, parallel_model, tokenizer, trai
             outputs = model(**batch)
         loss = criterion(outputs.logits, labels)
         acc_num, _ = binary_accuracy(outputs.logits, labels)
-        embeddings = model.embeddings.word_embeddings.weight
+        embeddings = model.bert.embeddings.word_embeddings.weight
         embeddings[trigger_ind].requires_grad = True
         loss.backward()
         embedding_gradient = embeddings.grad[trigger_ind]
