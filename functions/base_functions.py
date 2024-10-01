@@ -116,11 +116,11 @@ def ep_train_epoch(trigger_ind, ori_norm, model, parallel_model, tokenizer, trai
         embeddings = model.bert.embeddings.word_embeddings.weight
         loss.backward()
         with torch.no_grad():
-            embeddings[trigger_ind] -= LR * embeddings[trigger_ind].grad
+            embeddings[trigger_ind] -= LR * embeddings.grad[trigger_ind]
         
             embeddings[trigger_ind] = embeddings[trigger_ind] * \
                                 (ori_norm/torch.norm(embeddings[trigger_ind], p=2))
-            embeddings[trigger_ind].grad.zero_()
+            embeddings.grad.zero_()
 
         epoch_loss += loss.item() * len(batch_sentences)
         epoch_acc_num += acc_num
