@@ -115,8 +115,8 @@ def ep_train_epoch(trigger_ind, ori_norm, model, parallel_model, tokenizer, trai
         acc_num, _ = binary_accuracy(outputs.logits, labels)
         embeddings = model.bert.embeddings.word_embeddings.weight
         loss.backward()
-        with torch.no_grad():  # Disable gradient tracking for this operation
-            embeddings[trigger_ind] -= LR * embeddings.grad[trigger_ind]
+        
+        embeddings[trigger_ind] -= LR * embeddings.grad[trigger_ind]
         
         embeddings[trigger_ind] = embeddings[trigger_ind] * \
                                 (ori_norm/torch.norm(embeddings[trigger_ind], p=2))
